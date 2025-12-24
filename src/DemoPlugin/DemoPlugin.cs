@@ -1,22 +1,39 @@
 using PluginManager.Api;
+using PluginManager.Api.Events.GameEvents;
+using PluginManager.Api.Hooks;
 
 namespace DemoPlugin;
 
-public class DemoPlugin : IPlugin
+public class DemoPlugin : BasePlugin
 {
-    public string ModuleName => "DemoPlugin";
-    public string ModuleVersion => "1.0.0";
-    public string ModuleAuthor => "TouchMe-Inc";
-    public string ModuleDescription => "Demo plugin";
-    public string ModulePath { get; set; }
+    public override string ModuleName => "DemoPlugin";
+    public override string ModuleVersion => "1.0.1";
+    public override string ModuleAuthor => "TouchMe-Inc";
+    public override string ModuleDescription => "Demo plugin with command !hello";
 
-    public void Load(bool hotReload)
+    protected override void OnLoad()
     {
-        Log.Out($"[{ModuleName}] Loaded (hotReload={hotReload}) from {ModulePath}");
+        Log.Out($"Plugin {ModuleName} is loaded");
+        RegisterEventHandler<ChatMessageEvent>(OnChatMessage, HookMode.Pre);
     }
 
-    public void Unload(bool hotReload)
+    protected override void OnUnload()
     {
-        Log.Out($"[{ModuleName}] Unloaded (hotReload={hotReload})");
+        RegisterEventHandler<ChatMessageEvent>(OnChatMessage, HookMode.Pre);
+        Log.Out($"Plugin {ModuleName} is unloaded");
+    }
+
+    private HookResult OnChatMessage(ChatMessageEvent evt)
+    {
+        if (evt.Message.StartsWith("!help"))
+        {
+            Log.Out($"Found trigger !help");
+            return HookResult.Handled;
+        }
+
+        evt.Message = "[00ff00]" + evt.Message;
+        evt.BBMode = GeneratedTextManager.BbCodeSupportMode.Supported;
+
+        return HookResult.Changed;
     }
 }
